@@ -65,28 +65,37 @@ updateHelper : Msg -> Model -> Model
 updateHelper msg model =
     case msg of
         Tick t ->
-            moveSnek model
+            let
+                bearing =
+                    case model.quedKeyPress of
+                        Just key ->
+                            newBearingIfValidTurn key model.bearing
+
+                        Nothing ->
+                            model.bearing
+            in
+                { model | bearing = bearing, quedKeyPress = Nothing } |> moveSnek
 
         KeyboardTjofras keyCode ->
             let
                 wannaturnto =
                     case keyCode of
                         37 ->
-                            West
+                            Just West
 
                         38 ->
-                            North
+                            Just North
 
                         39 ->
-                            East
+                            Just East
 
                         40 ->
-                            South
+                            Just South
 
                         _ ->
-                            model.bearing
+                            Nothing
             in
-                { model | bearing = (newBearingIfValidTurn wannaturnto model.bearing) }
+                { model | quedKeyPress = wannaturnto }
 
 
 newBearingIfValidTurn : Bearing -> Bearing -> Bearing
@@ -102,7 +111,7 @@ newBearingIfValidTurn requestedBearing currentBearing =
         currentBearing
 
 
-init : ( Model, Cmd msg )
+init : ( Model, Cmd Msg )
 init =
     ( { snek = Nonempty { x = 1, y = 0 } [ { x = 0, y = 0 }, { x = 0, y = 1 }, { x = 0, y = 2 }, { x = 0, y = 3 }, { x = 0, y = 4 } ]
       , bearing = East
@@ -111,6 +120,7 @@ init =
             { cellSize = 10
             , boardSize = { width = 100, height = 100 }
             }
+      , quedKeyPress = Nothing
       }
     , Cmd.none
     )
@@ -124,6 +134,7 @@ type alias Model =
         { cellSize : Int
         , boardSize : { width : Int, height : Int }
         }
+    , quedKeyPress : Maybe Bearing
     }
 
 
