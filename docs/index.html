@@ -9867,9 +9867,9 @@ var _user$project$Snek$Acc = F2(
 	function (a, b) {
 		return {result: a, neighbour: b};
 	});
-var _user$project$Snek$Model = F4(
-	function (a, b, c, d) {
-		return {snek: a, bearing: b, apple: c, boardConf: d};
+var _user$project$Snek$Model = F5(
+	function (a, b, c, d, e) {
+		return {snek: a, bearing: b, apple: c, boardConf: d, quedKeyPress: e};
 	});
 var _user$project$Snek$Coordinates = F2(
 	function (a, b) {
@@ -9909,7 +9909,8 @@ var _user$project$Snek$init = {
 		boardConf: {
 			cellSize: 10,
 			boardSize: {width: 100, height: 100}
-		}
+		},
+		quedKeyPress: _elm_lang$core$Maybe$Nothing
 	},
 	_1: _elm_lang$core$Platform_Cmd$none
 };
@@ -9923,28 +9924,37 @@ var _user$project$Snek$updateHelper = F2(
 	function (msg, model) {
 		var _p3 = msg;
 		if (_p3.ctor === 'Tick') {
-			return _user$project$Snek$moveSnek(model);
+			var bearing = function () {
+				var _p4 = model.quedKeyPress;
+				if (_p4.ctor === 'Just') {
+					return A2(_user$project$Snek$newBearingIfValidTurn, _p4._0, model.bearing);
+				} else {
+					return model.bearing;
+				}
+			}();
+			return _user$project$Snek$moveSnek(
+				_elm_lang$core$Native_Utils.update(
+					model,
+					{bearing: bearing, quedKeyPress: _elm_lang$core$Maybe$Nothing}));
 		} else {
 			var wannaturnto = function () {
-				var _p4 = _p3._0;
-				switch (_p4) {
+				var _p5 = _p3._0;
+				switch (_p5) {
 					case 37:
-						return _user$project$Snek$West;
+						return _elm_lang$core$Maybe$Just(_user$project$Snek$West);
 					case 38:
-						return _user$project$Snek$North;
+						return _elm_lang$core$Maybe$Just(_user$project$Snek$North);
 					case 39:
-						return _user$project$Snek$East;
+						return _elm_lang$core$Maybe$Just(_user$project$Snek$East);
 					case 40:
-						return _user$project$Snek$South;
+						return _elm_lang$core$Maybe$Just(_user$project$Snek$South);
 					default:
-						return model.bearing;
+						return _elm_lang$core$Maybe$Nothing;
 				}
 			}();
 			return _elm_lang$core$Native_Utils.update(
 				model,
-				{
-					bearing: A2(_user$project$Snek$newBearingIfValidTurn, wannaturnto, model.bearing)
-				});
+				{quedKeyPress: wannaturnto});
 		}
 	});
 var _user$project$Snek$update = F2(
