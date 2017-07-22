@@ -1,1 +1,1 @@
-elm make Snek.elm --yes --output docs/index.html
+elm make src/Snek.elm --yes --output docs/index.html
