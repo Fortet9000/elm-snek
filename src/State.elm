@@ -142,9 +142,6 @@ newBearingIfValidTurn requestedBearing currentBearing =
 moveSnek : Model -> Model
 moveSnek model =
     let
-        lastSegment =
-            fromElement (get -1 model.snek)
-
         moveSnek : Snek -> Bearing -> Snek
         moveSnek snek bearing =
             let
@@ -154,7 +151,11 @@ moveSnek model =
                 Nonempty newHead (moveBody (head snek) (tail snek))
     in
         if model.justAte then
-            { model | justAte = False, snek = (append (moveSnek model.snek model.bearing) lastSegment) }
+            let
+                lastSegment =
+                    fromElement (get -1 model.snek)
+            in
+                { model | justAte = False, snek = (append (moveSnek model.snek model.bearing) lastSegment) }
         else
             { model | snek = moveSnek model.snek model.bearing }
 
