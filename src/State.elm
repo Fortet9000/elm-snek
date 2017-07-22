@@ -8,18 +8,26 @@ import Time exposing (every, second)
 
 init : ( Model, Cmd Msg )
 init =
-    ( { snek = Nonempty { x = 1, y = 0 } [ { x = 0, y = 0 }, { x = 0, y = 1 }, { x = 0, y = 2 }, { x = 0, y = 3 }, { x = 0, y = 4 } ]
-      , bearing = East
-      , apple = { x = 10, y = 10 }
-      , boardConf =
-            { cellSize = 10
-            , boardSize = { width = 100, height = 100 }
-            }
-      , quedKeyPress = Nothing
-      , gameState = Stopped NotStarted
-      }
-    , Cmd.none
-    )
+    ( initState, Cmd.none )
+
+
+initState : Model
+initState =
+    { snek = initSnek
+    , bearing = East
+    , apple = { x = 10, y = 10 }
+    , boardConf =
+        { cellSize = 10
+        , boardSize = { width = 100, height = 100 }
+        }
+    , quedKeyPress = Nothing
+    , gameState = Stopped NotStarted
+    }
+
+
+initSnek : Nonempty { x : Int, y : Int }
+initSnek =
+    Nonempty { x = 1, y = 0 } [ { x = 0, y = 0 }, { x = 0, y = 1 }, { x = 0, y = 2 }, { x = 0, y = 3 }, { x = 0, y = 4 } ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -40,33 +48,66 @@ updateHelper msg model =
                         Nothing ->
                             model.bearing
             in
-                { model | bearing = bearing, quedKeyPress = Nothing } |> moveSnek
+                { model | bearing = bearing, quedKeyPress = Nothing } |> moveSnek |> checkCollision
 
         KeyboardTjofras keyCode ->
-            case model.gameState of
-                Running ->
-                    let
-                        wannaturnto =
-                            case keyCode of
-                                37 ->
-                                    Just West
+            keyPress model keyCode
 
-                                38 ->
-                                    Just North
 
-                                39 ->
-                                    Just East
+checkCollision : Model -> Model
+checkCollision model =
+    case outOfBounds model.snek model.boardConf of
+        True ->
+            { model | gameState = Stopped Lost }
 
-                                40 ->
-                                    Just South
+        False ->
+            model
 
-                                _ ->
-                                    Nothing
-                    in
-                        { model | quedKeyPress = wannaturnto }
 
-                Stopped _ ->
-                    { model | gameState = Running }
+outOfBounds : Snek -> { a | cellSize : Int, boardSize : { b | width : Int, height : Int } } -> Bool
+outOfBounds snek boardConf =
+    let
+        h =
+            head snek
+
+        bottomBorder =
+            boardConf.boardSize.height // boardConf.cellSize
+
+        rightBorder =
+            boardConf.boardSize.width // boardConf.cellSize
+    in
+        if h.x >= rightBorder || h.x < 0 || h.y < 0 || h.y >= bottomBorder then
+            True
+        else
+            False
+
+
+keyPress : Model -> KeyCode -> Model
+keyPress model keyCode =
+    case model.gameState of
+        Running ->
+            let
+                wannaturnto =
+                    case keyCode of
+                        37 ->
+                            Just West
+
+                        38 ->
+                            Just North
+
+                        39 ->
+                            Just East
+
+                        40 ->
+                            Just South
+
+                        _ ->
+                            Nothing
+            in
+                { model | quedKeyPress = wannaturnto }
+
+        Stopped _ ->
+            { initState | gameState = Running }
 
 
 newBearingIfValidTurn : Bearing -> Bearing -> Bearing

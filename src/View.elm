@@ -22,7 +22,7 @@ view model =
     in
         div []
             [ header model.gameState
-            , svg [ viewBox ("0 0 " ++ width_ ++ " " ++ height_), width "800px" ]
+            , svg [ Html.Attributes.style [ ( "border", "solid" ) ], viewBox ("0 0 " ++ width_ ++ " " ++ height_), width "800px" ]
                 (model.snek
                     |> List.Nonempty.map drawTriangle
                     |> List.Nonempty.toList
@@ -45,7 +45,7 @@ header gameStatus =
                     h1 [ Html.Attributes.style [ ( "position", "absolute" ) ] ] [ Html.text "You died" ]
 
         _ ->
-            h1 [] []
+            h1 [ Html.Attributes.style [ ( "display", "none" ) ] ] []
 
 
 triangle : Int -> Coordinates -> Svg Msg
