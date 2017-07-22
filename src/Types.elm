@@ -9,6 +9,7 @@ type alias Model =
     { snek : Snek
     , bearing : Bearing
     , apple : Coordinates
+    , justAte : Bool
     , boardConf :
         { cellSize : Int
         , boardSize : { width : Int, height : Int }

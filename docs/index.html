@@ -10064,9 +10064,9 @@ var _mgold$elm_nonempty_list$List_Nonempty$unzip = function (_p97) {
 		_1: A2(_mgold$elm_nonempty_list$List_Nonempty$Nonempty, _p98._0._1, ys)
 	};
 };
-var _user$project$Types$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {snek: a, bearing: b, apple: c, boardConf: d, quedKeyPress: e, gameState: f};
+var _user$project$Types$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {snek: a, bearing: b, apple: c, justAte: d, boardConf: e, quedKeyPress: f, gameState: g};
 	});
 var _user$project$Types$Acc = F2(
 	function (a, b) {
@@ -10185,7 +10185,17 @@ var _user$project$State$moveSnek = function (model) {
 					_mgold$elm_nonempty_list$List_Nonempty$head(snek),
 					_mgold$elm_nonempty_list$List_Nonempty$tail(snek)));
 		});
-	return _elm_lang$core$Native_Utils.update(
+	var lastSegment = _mgold$elm_nonempty_list$List_Nonempty$fromElement(
+		A2(_mgold$elm_nonempty_list$List_Nonempty$get, -1, model.snek));
+	return model.justAte ? _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			justAte: false,
+			snek: A2(
+				_mgold$elm_nonempty_list$List_Nonempty$append,
+				A2(moveSnek, model.snek, model.bearing),
+				lastSegment)
+		}) : _elm_lang$core$Native_Utils.update(
 		model,
 		{
 			snek: A2(moveSnek, model.snek, model.bearing)
@@ -10195,48 +10205,128 @@ var _user$project$State$newBearingIfValidTurn = F2(
 	function (requestedBearing, currentBearing) {
 		return (_elm_lang$core$Native_Utils.eq(currentBearing, _user$project$Types$East) || _elm_lang$core$Native_Utils.eq(currentBearing, _user$project$Types$West)) ? ((_elm_lang$core$Native_Utils.eq(requestedBearing, _user$project$Types$North) || _elm_lang$core$Native_Utils.eq(requestedBearing, _user$project$Types$South)) ? requestedBearing : currentBearing) : ((_elm_lang$core$Native_Utils.eq(requestedBearing, _user$project$Types$East) || _elm_lang$core$Native_Utils.eq(requestedBearing, _user$project$Types$West)) ? requestedBearing : currentBearing);
 	});
+var _user$project$State$outOfBounds = F2(
+	function (snek, boardConf) {
+		var rightBorder = (boardConf.boardSize.width / boardConf.cellSize) | 0;
+		var bottomBorder = (boardConf.boardSize.height / boardConf.cellSize) | 0;
+		var h = _mgold$elm_nonempty_list$List_Nonempty$head(snek);
+		return ((_elm_lang$core$Native_Utils.cmp(h.x, rightBorder) > -1) || ((_elm_lang$core$Native_Utils.cmp(h.x, 0) < 0) || ((_elm_lang$core$Native_Utils.cmp(h.y, 0) < 0) || (_elm_lang$core$Native_Utils.cmp(h.y, bottomBorder) > -1)))) ? true : false;
+	});
+var _user$project$State$checkCollision = function (model) {
+	var _p2 = A2(_user$project$State$outOfBounds, model.snek, model.boardConf);
+	if (_p2 === true) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				gameState: _user$project$Types$Stopped(_user$project$Types$Lost)
+			});
+	} else {
+		return model;
+	}
+};
+var _user$project$State$onApple = F2(
+	function (snek, apple) {
+		return _elm_lang$core$Native_Utils.eq(
+			_mgold$elm_nonempty_list$List_Nonempty$head(snek),
+			apple);
+	});
+var _user$project$State$eatApple = function (model) {
+	var _p3 = A2(_user$project$State$onApple, model.snek, model.apple);
+	if (_p3 === true) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				justAte: true,
+				apple: {x: 0, y: 0}
+			});
+	} else {
+		return model;
+	}
+};
+var _user$project$State$initSnek = A2(
+	_mgold$elm_nonempty_list$List_Nonempty$Nonempty,
+	{x: 1, y: 0},
+	{
+		ctor: '::',
+		_0: {x: 0, y: 0},
+		_1: {
+			ctor: '::',
+			_0: {x: 0, y: 1},
+			_1: {
+				ctor: '::',
+				_0: {x: 0, y: 2},
+				_1: {
+					ctor: '::',
+					_0: {x: 0, y: 3},
+					_1: {
+						ctor: '::',
+						_0: {x: 0, y: 4},
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
+var _user$project$State$initState = {
+	snek: _user$project$State$initSnek,
+	bearing: _user$project$Types$East,
+	apple: {x: 4, y: 4},
+	justAte: false,
+	boardConf: {
+		cellSize: 10,
+		boardSize: {width: 100, height: 100}
+	},
+	quedKeyPress: _elm_lang$core$Maybe$Nothing,
+	gameState: _user$project$Types$Stopped(_user$project$Types$NotStarted)
+};
+var _user$project$State$keyPress = F2(
+	function (model, keyCode) {
+		var _p4 = model.gameState;
+		if (_p4.ctor === 'Running') {
+			var wannaturnto = function () {
+				var _p5 = keyCode;
+				switch (_p5) {
+					case 37:
+						return _elm_lang$core$Maybe$Just(_user$project$Types$West);
+					case 38:
+						return _elm_lang$core$Maybe$Just(_user$project$Types$North);
+					case 39:
+						return _elm_lang$core$Maybe$Just(_user$project$Types$East);
+					case 40:
+						return _elm_lang$core$Maybe$Just(_user$project$Types$South);
+					default:
+						return _elm_lang$core$Maybe$Nothing;
+				}
+			}();
+			return _elm_lang$core$Native_Utils.update(
+				model,
+				{quedKeyPress: wannaturnto});
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				_user$project$State$initState,
+				{gameState: _user$project$Types$Running});
+		}
+	});
 var _user$project$State$updateHelper = F2(
 	function (msg, model) {
-		var _p2 = msg;
-		if (_p2.ctor === 'Tick') {
+		var _p6 = msg;
+		if (_p6.ctor === 'Tick') {
 			var bearing = function () {
-				var _p3 = model.quedKeyPress;
-				if (_p3.ctor === 'Just') {
-					return A2(_user$project$State$newBearingIfValidTurn, _p3._0, model.bearing);
+				var _p7 = model.quedKeyPress;
+				if (_p7.ctor === 'Just') {
+					return A2(_user$project$State$newBearingIfValidTurn, _p7._0, model.bearing);
 				} else {
 					return model.bearing;
 				}
 			}();
-			return _user$project$State$moveSnek(
-				_elm_lang$core$Native_Utils.update(
-					model,
-					{bearing: bearing, quedKeyPress: _elm_lang$core$Maybe$Nothing}));
+			return _user$project$State$checkCollision(
+				_user$project$State$eatApple(
+					_user$project$State$moveSnek(
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{bearing: bearing, quedKeyPress: _elm_lang$core$Maybe$Nothing}))));
 		} else {
-			var _p4 = model.gameState;
-			if (_p4.ctor === 'Running') {
-				var wannaturnto = function () {
-					var _p5 = _p2._0;
-					switch (_p5) {
-						case 37:
-							return _elm_lang$core$Maybe$Just(_user$project$Types$West);
-						case 38:
-							return _elm_lang$core$Maybe$Just(_user$project$Types$North);
-						case 39:
-							return _elm_lang$core$Maybe$Just(_user$project$Types$East);
-						case 40:
-							return _elm_lang$core$Maybe$Just(_user$project$Types$South);
-						default:
-							return _elm_lang$core$Maybe$Nothing;
-					}
-				}();
-				return _elm_lang$core$Native_Utils.update(
-					model,
-					{quedKeyPress: wannaturnto});
-			} else {
-				return _elm_lang$core$Native_Utils.update(
-					model,
-					{gameState: _user$project$Types$Running});
-			}
+			return A2(_user$project$State$keyPress, model, _p6._0);
 		}
 	});
 var _user$project$State$update = F2(
@@ -10247,44 +10337,7 @@ var _user$project$State$update = F2(
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
 	});
-var _user$project$State$init = {
-	ctor: '_Tuple2',
-	_0: {
-		snek: A2(
-			_mgold$elm_nonempty_list$List_Nonempty$Nonempty,
-			{x: 1, y: 0},
-			{
-				ctor: '::',
-				_0: {x: 0, y: 0},
-				_1: {
-					ctor: '::',
-					_0: {x: 0, y: 1},
-					_1: {
-						ctor: '::',
-						_0: {x: 0, y: 2},
-						_1: {
-							ctor: '::',
-							_0: {x: 0, y: 3},
-							_1: {
-								ctor: '::',
-								_0: {x: 0, y: 4},
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}
-			}),
-		bearing: _user$project$Types$East,
-		apple: {x: 10, y: 10},
-		boardConf: {
-			cellSize: 10,
-			boardSize: {width: 100, height: 100}
-		},
-		quedKeyPress: _elm_lang$core$Maybe$Nothing,
-		gameState: _user$project$Types$Stopped(_user$project$Types$NotStarted)
-	},
-	_1: _elm_lang$core$Platform_Cmd$none
-};
+var _user$project$State$init = {ctor: '_Tuple2', _0: _user$project$State$initState, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$View$triangle = F2(
 	function (size, _p0) {
 		var _p1 = _p0;
@@ -10328,7 +10381,8 @@ var _user$project$View$triangle = F2(
 					_0: _elm_lang$svg$Svg_Attributes$stroke('pink'),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$points(trianglePoints),
+						_0: _elm_lang$svg$Svg_Attributes$points(
+							A2(_elm_lang$core$Debug$log, 'smth', trianglePoints)),
 						_1: {ctor: '[]'}
 					}
 				}
@@ -10398,11 +10452,55 @@ var _user$project$View$header = function (gameStatus) {
 	} else {
 		return A2(
 			_elm_lang$html$Html$h1,
-			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'display', _1: 'none'},
+						_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			},
 			{ctor: '[]'});
 	}
 };
+var _user$project$View$apple = F2(
+	function (size, _p4) {
+		var _p5 = _p4;
+		var y_ = _p5.y * size;
+		var x_ = _p5.x * size;
+		var offset = (size / 2) | 0;
+		var x1 = _elm_lang$core$Basics$toString(x_ + offset);
+		var y1 = _elm_lang$core$Basics$toString(y_ + offset);
+		var rad = _elm_lang$core$Basics$toString(offset);
+		return A2(
+			_elm_lang$svg$Svg$circle,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$cx(x1),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$cy(y1),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$r(rad),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$stroke('Aquamarine'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$fill('Aquamarine'),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			},
+			{ctor: '[]'});
+	});
 var _user$project$View$view = function (model) {
+	var drawApple = A2(_user$project$View$apple, model.boardConf.cellSize, model.apple);
 	var drawTriangle = _user$project$View$triangle(model.boardConf.cellSize);
 	var height_ = _elm_lang$core$Basics$toString(model.boardConf.boardSize.height);
 	var width_ = _elm_lang$core$Basics$toString(model.boardConf.boardSize.width);
@@ -10418,22 +10516,35 @@ var _user$project$View$view = function (model) {
 					_elm_lang$svg$Svg$svg,
 					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$viewBox(
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								'0 0 ',
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									width_,
-									A2(_elm_lang$core$Basics_ops['++'], ' ', height_)))),
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'border', _1: 'solid'},
+								_1: {ctor: '[]'}
+							}),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$width('800px'),
-							_1: {ctor: '[]'}
+							_0: _elm_lang$svg$Svg_Attributes$viewBox(
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									'0 0 ',
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										width_,
+										A2(_elm_lang$core$Basics_ops['++'], ' ', height_)))),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$width('800px'),
+								_1: {ctor: '[]'}
+							}
 						}
 					},
-					_mgold$elm_nonempty_list$List_Nonempty$toList(
-						A2(_mgold$elm_nonempty_list$List_Nonempty$map, drawTriangle, model.snek))),
+					{
+						ctor: '::',
+						_0: drawApple,
+						_1: _mgold$elm_nonempty_list$List_Nonempty$toList(
+							A2(_mgold$elm_nonempty_list$List_Nonempty$map, drawTriangle, model.snek))
+					}),
 				_1: {ctor: '[]'}
 			}
 		});

@@ -16,6 +16,7 @@ initState =
     { snek = initSnek
     , bearing = East
     , apple = { x = 4, y = 4 }
+    , justAte = False
     , boardConf =
         { cellSize = 10
         , boardSize = { width = 100, height = 100 }
@@ -48,10 +49,25 @@ updateHelper msg model =
                         Nothing ->
                             model.bearing
             in
-                { model | bearing = bearing, quedKeyPress = Nothing } |> moveSnek |> checkCollision
+                { model | bearing = bearing, quedKeyPress = Nothing } |> moveSnek |> eatApple |> checkCollision
 
         KeyboardTjofras keyCode ->
             keyPress model keyCode
+
+
+eatApple : Model -> Model
+eatApple model =
+    case onApple model.snek model.apple of
+        True ->
+            { model | justAte = True, apple = { x = 0, y = 0 } }
+
+        False ->
+            model
+
+
+onApple : Snek -> Coordinates -> Bool
+onApple snek apple =
+    (head snek) == apple
 
 
 checkCollision : Model -> Model
@@ -126,6 +142,9 @@ newBearingIfValidTurn requestedBearing currentBearing =
 moveSnek : Model -> Model
 moveSnek model =
     let
+        lastSegment =
+            fromElement (get -1 model.snek)
+
         moveSnek : Snek -> Bearing -> Snek
         moveSnek snek bearing =
             let
@@ -134,7 +153,10 @@ moveSnek model =
             in
                 Nonempty newHead (moveBody (head snek) (tail snek))
     in
-        { model | snek = moveSnek model.snek model.bearing }
+        if model.justAte then
+            { model | justAte = False, snek = (append (moveSnek model.snek model.bearing) lastSegment) }
+        else
+            { model | snek = moveSnek model.snek model.bearing }
 
 
 moveBody : Coordinates -> List Coordinates -> List Coordinates
