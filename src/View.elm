@@ -19,15 +19,44 @@ view model =
 
         drawTriangle =
             triangle model.boardConf.cellSize
+
+        drawApple =
+            apple model.boardConf.cellSize model.apple
     in
         div []
             [ header model.gameState
             , svg [ Html.Attributes.style [ ( "border", "solid" ) ], viewBox ("0 0 " ++ width_ ++ " " ++ height_), width "800px" ]
-                (model.snek
-                    |> List.Nonempty.map drawTriangle
-                    |> List.Nonempty.toList
+                (drawApple
+                    :: (model.snek
+                            |> List.Nonempty.map drawTriangle
+                            |> List.Nonempty.toList
+                       )
                 )
             ]
+
+
+apple : Int -> Coordinates -> Svg Msg
+apple size { x, y } =
+    let
+        offset =
+            size // 2
+
+        x_ =
+            x * size
+
+        y_ =
+            y * size
+
+        x1 =
+            toString <| x_ + offset
+
+        y1 =
+            toString <| y_ + offset
+
+        rad =
+            offset |> toString
+    in
+        circle [ cx x1, cy y1, r rad, stroke "Aquamarine", fill "Aquamarine" ] []
 
 
 header : GameState -> Html Msg
@@ -87,4 +116,4 @@ triangle size { x, y } =
         trianglePoints =
             x1y1 ++ " " ++ x3y3 ++ " " ++ x2y2
     in
-        polyline [ fill "none", stroke "pink", points trianglePoints ] []
+        polyline [ fill "none", stroke "pink", points (Debug.log "smth" trianglePoints) ] []

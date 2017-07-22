@@ -15,7 +15,7 @@ initState : Model
 initState =
     { snek = initSnek
     , bearing = East
-    , apple = { x = 10, y = 10 }
+    , apple = { x = 4, y = 4 }
     , boardConf =
         { cellSize = 10
         , boardSize = { width = 100, height = 100 }
